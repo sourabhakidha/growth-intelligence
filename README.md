@@ -13,6 +13,10 @@ An internal dashboard for performance marketing and growth. Built with Next.js 1
   - `tests/pii-guard.test.ts` fails the build if a schema or SQL file could expose names, phone numbers, addresses or IDs.
 - No secret is ever `NEXT_PUBLIC_*`. The database module imports `server-only`, so browser code can't load it.
 
+## Access
+The dashboard is **open by default** (`ACCESS_MODE=open`, the owner's decision on 17 Oct 2026): there's no login, and anyone with the URL can view it. It still never shows customer-level data, and search engines are told not to index it.
+To require Google sign-in, set `ACCESS_MODE=google` and the `AUTH_*` / `ALLOWED_EMAILS` variables on Vercel, then redeploy. No code change is needed.
+
 ## Architecture
 | Layer | Location |
 |---|---|

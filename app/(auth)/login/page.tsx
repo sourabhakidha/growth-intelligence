@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { BarChart3, ShieldCheck } from "lucide-react";
 import { signInWithGoogle } from "@/app/actions";
 import { getUser } from "@/lib/auth/guard";
+import { isOpenAccess } from "@/lib/auth/mode";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -12,7 +13,7 @@ const ERRORS: Record<string, string> = {
 };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
-  if (await getUser()) redirect("/");
+  if (isOpenAccess() || (await getUser())) redirect("/");
   const sp = await searchParams;
   const error = typeof sp.error === "string" ? (ERRORS[sp.error] ?? "Sign-in failed. Try again.") : null;
   const next = typeof sp.next === "string" ? sp.next : "/";

@@ -3,6 +3,7 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { isEmailAllowed } from "./allowlist";
+import { isOpenAccess } from "./mode";
 
 export interface DashboardUser {
   email: string;
@@ -11,6 +12,7 @@ export interface DashboardUser {
 
 /** Returns the signed-in, allow-listed user or null. Never trusts the client. */
 export async function getUser(): Promise<DashboardUser | null> {
+  if (isOpenAccess()) return { email: "Open access (no login)", name: null };
   const session = await auth();
   const email = session?.user?.email;
   if (!email || !isEmailAllowed(email, process.env.ALLOWED_EMAILS)) return null;

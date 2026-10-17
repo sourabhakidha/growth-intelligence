@@ -52,3 +52,15 @@ test("allow-list is deny-by-default and case-insensitive", () => {
   assert.equal(isEmailAllowed("c@notakidha.com", "@akidha.com"), false);
   assert.equal(isEmailAllowed("c@akidha.com.evil.io", "@akidha.com"), false);
 });
+
+import { isOpenAccess } from "../lib/auth/mode.ts";
+
+test("access mode defaults to open; google only when explicitly set", () => {
+  const prev = process.env.ACCESS_MODE;
+  delete process.env.ACCESS_MODE;
+  assert.equal(isOpenAccess(), true);
+  process.env.ACCESS_MODE = "google";
+  assert.equal(isOpenAccess(), false);
+  if (prev === undefined) delete process.env.ACCESS_MODE;
+  else process.env.ACCESS_MODE = prev;
+});

@@ -81,7 +81,8 @@ function Brand() {
 
 interface AppShellProps {
   userEmail: string;
-  signOutAction: () => Promise<void>;
+  /** null in open access mode (no login, nothing to sign out of). */
+  signOutAction: (() => Promise<void>) | null;
   liveData: boolean;
   children: React.ReactNode;
 }
@@ -101,11 +102,13 @@ export function AppShell({ userEmail, signOutAction, liveData, children }: AppSh
         <p className="truncate text-[11px] text-ink-3" title={userEmail}>
           {userEmail}
         </p>
-        <form action={signOutAction}>
-          <button type="submit" className="inline-flex items-center gap-1.5 text-xs text-ink-2 hover:text-ink">
-            <LogOut size={13} aria-hidden /> Sign out
-          </button>
-        </form>
+        {signOutAction ? (
+          <form action={signOutAction}>
+            <button type="submit" className="inline-flex items-center gap-1.5 text-xs text-ink-2 hover:text-ink">
+              <LogOut size={13} aria-hidden /> Sign out
+            </button>
+          </form>
+        ) : null}
       </div>
     </div>
   );
