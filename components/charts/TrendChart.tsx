@@ -7,6 +7,7 @@ import {
   Legend,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -31,10 +32,12 @@ interface TrendChartProps {
   kind?: "line" | "bar";
   stacked?: boolean;
   height?: number;
+  /** Optional dated annotations (e.g. spend changes, creative launches) drawn as labelled vertical lines. */
+  markers?: { date: string; label: string }[];
 }
 
 /** Daily trend on ONE y-axis (never dual-axis). Legend for ≥2 series; crosshair tooltip on hover. */
-export function TrendChart({ data, xKey, series, format, kind = "line", stacked = false, height = 260 }: TrendChartProps) {
+export function TrendChart({ data, xKey, series, format, kind = "line", stacked = false, height = 260, markers = [] }: TrendChartProps) {
   const axisTick = { fill: "var(--text-muted)", fontSize: 11 };
   const common = {
     data,
@@ -65,6 +68,15 @@ export function TrendChart({ data, xKey, series, format, kind = "line", stacked 
       <YAxis tick={axisTick} tickLine={false} axisLine={false} width={64} tickFormatter={yFmt} />
       {tooltip}
       {series.length > 1 ? <Legend iconType="plainline" wrapperStyle={{ fontSize: 12, color: "var(--text-secondary)" }} /> : null}
+      {markers.map((m, i) => (
+        <ReferenceLine
+          key={`${m.date}-${i}`}
+          x={m.date}
+          stroke="var(--border-strong)"
+          strokeDasharray="3 3"
+          label={{ value: m.label, position: i % 2 ? "insideTopLeft" : "insideTopRight", fill: "var(--text-muted)", fontSize: 10 }}
+        />
+      ))}
     </>
   );
 

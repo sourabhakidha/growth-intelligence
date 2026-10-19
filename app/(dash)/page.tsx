@@ -6,9 +6,9 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { SourceNotes } from "@/components/layout/SourceNotes";
 import { Callout } from "@/components/state/Badges";
 import { DataTable, type TableColumn } from "@/components/table/DataTable";
+import { InsightPanel } from "@/components/insights/InsightPanel";
 import { getCartLeadsDaily } from "@/lib/data/cartLeads";
-import { getMetaAccountDaily } from "@/lib/data/metaAds";
-import { getOrdersDaily, getUniqueCustomers } from "@/lib/data/orders";
+import { loadGrowthContext } from "@/lib/data/growth";
 import { acquisitionCosts, summarizeCartLeads, summarizeFresh, summarizeMeta, uniqueFreshCustomers } from "@/lib/metrics/compute";
 import { freshByChannelDaily, metaDaily } from "@/lib/metrics/series";
 import { rangeFromSearchParams } from "@/lib/page";
@@ -28,8 +28,7 @@ const DAILY_COLUMNS: TableColumn[] = [
   { key: "spend", label: "Meta spend", format: "inr" },
   { key: "installs", label: "Installs (Meta)", format: "count" },
   { key: "app", label: "Fresh APP", format: "count" },
-  { key: "web_agent", label: "Fresh WEB (agent)", format: "count" },
-  { key: "web_other", label: "Fresh WEB (other)", format: "count" },
+  { key: "web", label: "Fresh WEB", format: "count" },
   { key: "fresh_total", label: "Fresh orders", format: "count" },
   { key: "cac", label: "CAC / Fresh order", format: "inr" },
   { key: "fresh_revenue", label: "Fresh revenue", format: "inr" },
@@ -39,15 +38,9 @@ const DAILY_COLUMNS: TableColumn[] = [
 export default async function OverviewPage({ searchParams }: PageProps<"/">) {
   const { range, previous } = await rangeFromSearchParams(searchParams);
 
-  const [meta, orders, uniq, leads, metaPrev, ordersPrev, uniqPrev] = await Promise.all([
-    getMetaAccountDaily(range),
-    getOrdersDaily(range),
-    getUniqueCustomers(range),
-    getCartLeadsDaily(range),
-    getMetaAccountDaily(previous),
-    getOrdersDaily(previous),
-    getUniqueCustomers(previous),
-  ]);
+  // One shared loader for New Sales, customers, Meta spend, funnels and insights, so Overview and App Funnel agree.
+  const [ctx, leads] = await Promise.all([loadGrowthContext(range, previous), getCartLeadsDaily(range)]);
+  const { meta, orders, uniq, metaPrev, ordersPrev, uniqPrev } = ctx;
 
   const m = meta.state === "ok" ? summarizeMeta(meta.data) : null;
   const mp = metaPrev.state === "ok" ? summarizeMeta(metaPrev.data) : null;
@@ -79,7 +72,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/">) {
     <div className="space-y-5">
       <PageHeader
         title="Executive growth overview"
-        description="Meta spend, acquisition efficiency and new (Fresh) sales across self-serve APP and sales-assisted WEB orders."
+        description="New Sales (unique eligible Fresh orders), distinct Fresh customers and Meta acquisition cost, across self-serve APP and sales-assisted WEB orders."
         range={range}
         sources={["meta_ad_daily", "orders", "crm_cart_leads"]}
       />
@@ -88,16 +81,27 @@ export default async function OverviewPage({ searchParams }: PageProps<"/">) {
         <KpiCard metric="spend" state={meta.state} value={m?.spend} previous={mp?.spend} />
         <KpiCard metric="installs_meta" state={meta.state} value={m?.installs} previous={mp?.installs} />
         <KpiCard metric="cpi" state={meta.state} value={m?.cpi} previous={mp?.cpi} />
-        <KpiCard metric="cart_leads" state={leads.state} value={l?.total} />
+        <KpiCard metric="cart_leads_fresh" state={leads.state} value={l?.fresh} />
         <KpiCard metric="cac_fresh_order" state={acqState} value={acq.cac_fresh_order} previous={acqPrev.cac_fresh_order} />
         <KpiCard metric="cost_per_new_customer" state={custState} value={acq.cost_per_new_customer} previous={acqPrev.cost_per_new_customer} />
         <KpiCard metric="fresh_orders" state={orders.state} value={f?.fresh_orders} previous={fp?.fresh_orders} />
         <KpiCard metric="fresh_app" state={orders.state} value={f?.fresh_app} previous={fp?.fresh_app} />
-        <KpiCard metric="fresh_web_agent" state={orders.state} value={f?.fresh_web_agent} previous={fp?.fresh_web_agent} />
+        <KpiCard metric="fresh_web" state={orders.state} value={f?.fresh_web} previous={fp?.fresh_web} />
         <KpiCard metric="unique_new_customers" state={uniq.state} value={u} previous={up} />
         <KpiCard metric="fresh_revenue" state={orders.state} value={f?.fresh_revenue} previous={fp?.fresh_revenue} />
         <KpiCard metric="aov_fresh" state={orders.state} value={f?.aov_fresh} previous={fp?.aov_fresh} />
       </KpiGrid>
+
+      <Callout>
+        <strong>Definitions.</strong> New Sales = unique eligible Fresh orders (Order_Type = Fresh, excluding PRESCRIPTION_UPLOADED,
+        DELIVERY_CANCELED and THREE_PL_CANCELLED_ACKNOWLEDGEMENT). Fresh customers = distinct userIDs with an eligible Fresh order, de-duplicated
+        across APP and WEB. AOV = Fresh revenue ÷ New Sales. CAC per Fresh order = Meta spend (all campaigns in the ad account) ÷ New Sales
+        (APP + WEB); CAC per Fresh customer = the same spend ÷ distinct Fresh customers.
+      </Callout>
+
+      <ChartCard title="What needs attention" question="Ranked by business impact and urgency. Expand an item for evidence, causes, action and impact.">
+        <InsightPanel insights={ctx.insights} limit={5} />
+      </ChartCard>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <ChartCard title="Fresh orders by channel" question="Are new sales coming from self-serve or sales-assisted orders?" result={orders}>
@@ -109,8 +113,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/">) {
             stacked
             series={[
               { key: "app", label: "APP (self-serve)", color: "app" },
-              { key: "web_agent", label: "WEB (agent)", color: "web_agent" },
-              { key: "web_other", label: "WEB (other)", color: "web_other" },
+              { key: "web", label: "WEB (sales-assisted)", color: "web" },
             ]}
           />
         </ChartCard>
@@ -123,14 +126,14 @@ export default async function OverviewPage({ searchParams }: PageProps<"/">) {
         title="Daily summary"
         question="Day-by-day spend, Fresh orders and CAC."
         result={combinedState(meta, orders) === "ok" ? undefined : orders.state !== "ok" ? orders : meta}
-        footnote="CAC per Fresh order = Meta spend ÷ (Fresh APP + Fresh WEB orders). Order-based, not unique-customer based. Previous-period deltas compare with the same number of days immediately before."
+        footnote="CAC / Fresh order = Meta spend (all campaigns) ÷ eligible Fresh orders (APP + WEB) for that day. Daily rows are not summed into customers; the customer-based CAC is the KPI above. Previous-period deltas compare with the same number of days immediately before."
       >
         <DataTable columns={DAILY_COLUMNS} rows={dailyTable} exportName={`overview-daily-${range.from}-${range.to}`} />
       </ChartCard>
 
       <Callout>
-        Open definitions: whether WEB orders not placed by an agent count towards CAC, and whether CAC uses all Meta spend or only app
-        campaigns. Both are shown separately until confirmed. Target-vs-actual appears once targets are configured.
+        Spend scope: CAC uses all Meta spend in the ad account. If CAC should use app-install campaigns only, that is a definition change to
+        agree first. Target-vs-actual appears once targets are configured.
       </Callout>
 
       <SourceNotes sources={["meta_ad_daily", "orders", "crm_cart_leads"]} />

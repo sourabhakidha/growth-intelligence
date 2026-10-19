@@ -7,7 +7,6 @@ import type {
   MetaAccountDailyRow,
   OrdersDailyRow,
   OrdersUniqueCustomersRow,
-  RegionDailyRow,
 } from "../types/schemas";
 
 function div(n: number, d: number): number | null {
@@ -49,8 +48,7 @@ export function summarizeMeta(rows: readonly MetaAccountDailyRow[]): MetaTotals 
 export interface FreshTotals {
   fresh_orders: number;
   fresh_app: number;
-  fresh_web_agent: number;
-  fresh_web_other: number;
+  fresh_web: number;
   fresh_revenue: number;
   completed_fresh_orders: number;
   completed_fresh_revenue: number;
@@ -67,8 +65,7 @@ export function summarizeFresh(rows: readonly OrdersDailyRow[]): FreshTotals {
   return {
     fresh_orders,
     fresh_app: sum((r) => r.channel === "APP", "orders"),
-    fresh_web_agent: sum((r) => r.channel === "WEB_AGENT", "orders"),
-    fresh_web_other: sum((r) => r.channel === "WEB_OTHER", "orders"),
+    fresh_web: sum((r) => r.channel === "WEB", "orders"),
     fresh_revenue,
     completed_fresh_orders: sum(all, "completed_orders"),
     completed_fresh_revenue: sum(all, "completed_revenue"),
@@ -122,42 +119,4 @@ export function summarizeCartLeads(rows: readonly CartLeadDailyRow[]) {
     (a, r) => ({ total: a.total + r.total_cart_leads, fresh: a.fresh + r.fresh, repeat: a.repeat + r.repeat }),
     { total: 0, fresh: 0, repeat: 0 },
   );
-}
-
-export interface RegionSummary {
-  region: string;
-  fresh_orders: number;
-  fresh_app: number;
-  fresh_web_agent: number;
-  fresh_web_other: number;
-  fresh_revenue: number;
-  aov: number | null;
-  order_share: number | null;
-  revenue_share: number | null;
-}
-
-/** Region totals that always reconcile to total Fresh orders (Unmapped is a region row). */
-export function summarizeRegions(rows: readonly RegionDailyRow[]): RegionSummary[] {
-  const by = new Map<string, Omit<RegionSummary, "aov" | "order_share" | "revenue_share">>();
-  for (const r of rows) {
-    const cur = by.get(r.region) ?? {
-      region: r.region, fresh_orders: 0, fresh_app: 0, fresh_web_agent: 0, fresh_web_other: 0, fresh_revenue: 0,
-    };
-    cur.fresh_orders += r.fresh_orders;
-    cur.fresh_revenue += r.fresh_revenue;
-    if (r.channel === "APP") cur.fresh_app += r.fresh_orders;
-    else if (r.channel === "WEB_AGENT") cur.fresh_web_agent += r.fresh_orders;
-    else cur.fresh_web_other += r.fresh_orders;
-    by.set(r.region, cur);
-  }
-  const totalOrders = [...by.values()].reduce((a, r) => a + r.fresh_orders, 0);
-  const totalRev = [...by.values()].reduce((a, r) => a + r.fresh_revenue, 0);
-  return [...by.values()]
-    .map((r) => ({
-      ...r,
-      aov: div(r.fresh_revenue, r.fresh_orders),
-      order_share: div(r.fresh_orders, totalOrders),
-      revenue_share: div(r.fresh_revenue, totalRev),
-    }))
-    .sort((a, b) => b.fresh_orders - a.fresh_orders);
 }

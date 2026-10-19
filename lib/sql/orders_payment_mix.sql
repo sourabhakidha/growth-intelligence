@@ -3,11 +3,7 @@
 -- Params : $1 = from (date, IST), $2 = to (date, IST, inclusive)
 -- Rules  : same exclusions and channel logic as orders_daily.sql.
 select
-  case
-    when o."orderPlatform" = 'APP' then 'APP'
-    when o."orderPlatform" = 'WEB' and o."Internal_Team" is true then 'WEB_AGENT'
-    else 'WEB_OTHER'
-  end                                         as channel,
+  case when o."orderPlatform" = 'APP' then 'APP' else 'WEB' end as channel,
   coalesce(nullif(upper(trim(o."paymentMode")), ''), 'UNKNOWN') as payment_mode,
   count(*)                                    as orders,
   coalesce(sum(o."finalAmount"), 0)           as revenue

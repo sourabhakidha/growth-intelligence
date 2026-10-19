@@ -19,7 +19,7 @@ interface ChartCardProps {
 export function ChartCard({ title, question, result, status, footnote, className, children, actions }: ChartCardProps) {
   const showBody = !result || result.state === "ok";
   return (
-    <section className={cn("flex flex-col rounded-lg border border-line bg-surface-1", className)}>
+    <section className={cn("flex min-w-0 flex-col rounded-lg border border-line bg-surface-1", className)}>
       <header className="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
         <div className="min-w-0">
           <h2 className="text-sm font-semibold text-ink">{title}</h2>

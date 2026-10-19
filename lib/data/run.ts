@@ -2,14 +2,14 @@ import "server-only";
 
 import type { z } from "zod";
 import { assertUser } from "@/lib/auth/guard";
-import { isDatabaseConfigured } from "@/lib/db/pool";
-import { queryReadOnly } from "@/lib/db/readonly";
+import { QueryError, queryReadOnly } from "@/lib/db/readonly";
+import { isDatabaseConfigured } from "@/lib/db/supabase";
 import type { SqlName } from "@/lib/db/sql";
 import { isIsoDate, type DateRange } from "@/lib/format/ist";
 import type { DataResult, SourceId } from "@/lib/types/result";
 
 /**
- * Live queries run only when DATA_ENABLED=true AND DATABASE_URL is set. Phase 2A ships with live data off,
+ * Live queries run only when DATA_ENABLED=true AND SUPABASE_URL + SUPABASE_SERVICE_KEY are set. Phase 2A ships with live data off,
  * so every screen renders its "not connected" state — never mock numbers.
  */
 export function isLiveDataEnabled(): boolean {
@@ -18,7 +18,7 @@ export function isLiveDataEnabled(): boolean {
 
 function notConnectedReason(): string {
   if (process.env.DATA_ENABLED !== "true") return "Live data is switched off (Phase 2A shell).";
-  return "Database connection is not configured.";
+  return "Supabase is not configured (SUPABASE_URL / SUPABASE_SERVICE_KEY).";
 }
 
 export function assertRange(range: DateRange): void {
@@ -40,7 +40,11 @@ export async function runSource<S extends z.ZodTypeAny>(
     const fetchedAt = new Date().toISOString();
     if (rows.length === 0) return { state: "empty", source, fetchedAt, reason: "No rows for the selected dates." };
     return { state: "ok", source, data: rows, fetchedAt };
-  } catch {
+  } catch (err) {
+    // 42501: the service key has no SELECT grant on this source yet — show it as not connected, not broken.
+    if (err instanceof QueryError && err.code === "42501") {
+      return { state: "not_connected", source, reason: "The Supabase service key has no read access to this source yet." };
+    }
     // Details are logged server-side in queryReadOnly; the browser gets a generic message.
     return { state: "error", source, message: `Could not load ${sqlName}. See server logs.` };
   }

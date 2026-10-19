@@ -10,7 +10,8 @@ export type SourceId =
   | "ga4_app_funnel"
   | "crm_cart_leads"
   | "crm_lifecycle"
-  | "regions";
+  | "regions"
+  | "crm_change_log";
 
 export type DataResult<T> =
   | { state: "ok"; data: T; source: SourceId; fetchedAt: string }

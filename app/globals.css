@@ -3,68 +3,33 @@
 /* Design tokens. Chart series colors come from the validated dataviz reference palette
    (slots 1–3 validate all-pairs in light and dark). Status colors are reserved and always
    paired with an icon + label. */
+/* White theme for the whole dashboard (agreed 18 Oct 2026): white surfaces, text in black, with red / green / blue
+   reserved for meaning (worse / better / accent and Meta). The OS dark-mode preference is deliberately not followed. */
 :root {
   color-scheme: light;
-  --surface-0: #f4f4f2;
-  --surface-1: #fcfcfb;
-  --surface-2: #f0efec;
-  --border: #e3e2de;
-  --border-strong: #cfcdc7;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #7a7974;
-  --accent: #2a78d6;
-  --accent-soft: #e6f0fc;
-  --grid: #ebeae6;
+  --surface-0: #ffffff;
+  --surface-1: #ffffff;
+  --surface-2: #f3f5f8;
+  --border: #e3e6eb;
+  --border-strong: #c9ced6;
+  --text-primary: #000000;
+  --text-secondary: #1a1a1a;
+  --text-muted: #3d3d3d;
+  --accent: #1d4ed8;
+  --accent-soft: #e0e9fb;
+  --grid: #eceef2;
 
-  --series-app: #2a78d6;
-  --series-web-agent: #eb6834;
-  --series-web-other: #1baf7a;
-  --series-neutral: #8a8984;
+  --series-app: #1d4ed8;
+  --series-web-agent: #dc2626;
+  --series-web-other: #15803d;
+  --series-neutral: #8b919a;
+  --series-tier-4: #000000;
+  --series-tier-5: #93a3bd;
 
-  --status-good: #0ca30c;
-  --status-warning: #fab219;
-  --status-serious: #ec835a;
-  --status-critical: #d03b3b;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme="light"])) {
-    color-scheme: dark;
-    --surface-0: #121211;
-    --surface-1: #1a1a19;
-    --surface-2: #242422;
-    --border: #2e2e2b;
-    --border-strong: #3d3d39;
-    --text-primary: #f0efec;
-    --text-secondary: #c3c2b7;
-    --text-muted: #8f8e86;
-    --accent: #3987e5;
-    --accent-soft: #1b2a3d;
-    --grid: #2a2a27;
-    --series-app: #3987e5;
-    --series-web-agent: #d95926;
-    --series-web-other: #199e70;
-    --series-neutral: #8f8e86;
-  }
-}
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --surface-0: #121211;
-  --surface-1: #1a1a19;
-  --surface-2: #242422;
-  --border: #2e2e2b;
-  --border-strong: #3d3d39;
-  --text-primary: #f0efec;
-  --text-secondary: #c3c2b7;
-  --text-muted: #8f8e86;
-  --accent: #3987e5;
-  --accent-soft: #1b2a3d;
-  --grid: #2a2a27;
-  --series-app: #3987e5;
-  --series-web-agent: #d95926;
-  --series-web-other: #199e70;
-  --series-neutral: #8f8e86;
+  --status-good: #15803d;
+  --status-warning: #dc2626;
+  --status-serious: #dc2626;
+  --status-critical: #dc2626;
 }
 
 @theme inline {
@@ -113,4 +78,10 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .skeleton { animation: none; }
+}
+
+/* Kept for the Meta Ads page wrapper; the whole dashboard now uses the white theme above. */
+.theme-white {
+  background: #ffffff;
+  color: #000000;
 }

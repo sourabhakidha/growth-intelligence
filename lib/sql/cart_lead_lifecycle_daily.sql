@@ -38,8 +38,7 @@ j as (
     case
       when o."orderID" is null then null
       when o."orderPlatform" = 'APP' then 'APP'
-      when o."orderPlatform" = 'WEB' and o."Internal_Team" is true then 'WEB_AGENT'
-      else 'WEB_OTHER'
+      else 'WEB'
     end                                               as won_channel,
     o."Order_Type"                                    as won_type,
     extract(epoch from (m.created_at - lg.cart_ts)) / 60.0 as min_cart_to_lead
@@ -57,8 +56,7 @@ select
   count(*) filter (where dialled)                                      as dialled,
   count(*) filter (where won_any)                                      as won_any_order,
   count(*) filter (where won_type = 'Fresh' and won_channel = 'APP')       as won_fresh_app,
-  count(*) filter (where won_type = 'Fresh' and won_channel = 'WEB_AGENT') as won_fresh_web_agent,
-  count(*) filter (where won_type = 'Fresh' and won_channel = 'WEB_OTHER') as won_fresh_web_other,
+  count(*) filter (where won_type = 'Fresh' and won_channel = 'WEB')       as won_fresh_web,
   round((percentile_cont(0.5) within group (order by min_cart_to_lead))::numeric, 1) as median_min_cart_to_lead
 from j
 group by d

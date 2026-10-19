@@ -15,25 +15,24 @@ export function dateSpine(from: string, to: string): string[] {
   return out;
 }
 
-/** Fresh orders per day split by channel. Days with no row get 0 only if the source returned data for the range. */
+/** Fresh orders per day split by channel (APP / WEB). Days with no row get 0 only if the source returned data for the range. */
 export function freshByChannelDaily(rows: readonly OrdersDailyRow[], from: string, to: string): Row[] {
-  const map = new Map<string, { APP: number; WEB_AGENT: number; WEB_OTHER: number; revenue: number; completed_revenue: number }>();
+  const map = new Map<string, { APP: number; WEB: number; revenue: number; completed_revenue: number }>();
   for (const r of rows) {
     if (r.order_type !== "Fresh") continue;
-    const cur = map.get(r.order_date) ?? { APP: 0, WEB_AGENT: 0, WEB_OTHER: 0, revenue: 0, completed_revenue: 0 };
+    const cur = map.get(r.order_date) ?? { APP: 0, WEB: 0, revenue: 0, completed_revenue: 0 };
     cur[r.channel] += r.orders;
     cur.revenue += r.revenue;
     cur.completed_revenue += r.completed_revenue;
     map.set(r.order_date, cur);
   }
   return dateSpine(from, to).map((date) => {
-    const v = map.get(date) ?? { APP: 0, WEB_AGENT: 0, WEB_OTHER: 0, revenue: 0, completed_revenue: 0 };
-    const total = v.APP + v.WEB_AGENT + v.WEB_OTHER;
+    const v = map.get(date) ?? { APP: 0, WEB: 0, revenue: 0, completed_revenue: 0 };
+    const total = v.APP + v.WEB;
     return {
       date,
       app: v.APP,
-      web_agent: v.WEB_AGENT,
-      web_other: v.WEB_OTHER,
+      web: v.WEB,
       fresh_total: total,
       fresh_revenue: v.revenue,
       completed_fresh_revenue: v.completed_revenue,

@@ -33,7 +33,7 @@ export function KpiCard({ metric, value, previous, state, compact = true, sublab
   const good = delta === null ? null : def.higherIsBetter ? delta > 0 : delta < 0;
 
   return (
-    <div className="flex min-h-[104px] flex-col justify-between rounded-lg border border-line bg-surface-1 p-3">
+    <div className="flex min-h-[104px] min-w-0 flex-col justify-between rounded-lg border border-line bg-surface-1 p-3">
       <div className="flex items-start justify-between gap-2">
         <span className="text-xs font-medium text-ink-2">{def.label}</span>
         <MetricInfo def={def} />

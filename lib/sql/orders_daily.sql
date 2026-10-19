@@ -4,18 +4,14 @@
 -- Rules  : orderDate is stored as IST wall-clock time (timestamp without time zone), so ::date is the IST date.
 --          New-sales exclusions (audit §4.6, confirmed by owner): PRESCRIPTION_UPLOADED, DELIVERY_CANCELED,
 --          THREE_PL_CANCELLED_ACKNOWLEDGEMENT. No other status is excluded.
---          Channel: APP = orderPlatform 'APP' (self-serve); WEB_AGENT = 'WEB' placed by a sales agent
---          (Internal_Team = true marks agent-placed, NOT test orders — audit §4.1); WEB_OTHER = 'WEB' not agent-placed.
+--          Channel: APP = orderPlatform 'APP' (self-serve app orders); WEB = orderPlatform 'WEB' (sales-assisted orders
+--          within the app business — not website-acquired customers). WEB is never split into agent / non-agent.
 --          Order_Type is the source of truth for Fresh/Repeat (audit §4.5).
 -- Output : no PII. unique_customers is distinct within the output row only; never sum it across rows.
 with o as (
   select
     o."orderDate"::date as order_date,
-    case
-      when o."orderPlatform" = 'APP' then 'APP'
-      when o."orderPlatform" = 'WEB' and o."Internal_Team" is true then 'WEB_AGENT'
-      else 'WEB_OTHER'
-    end as channel,
+    case when o."orderPlatform" = 'APP' then 'APP' else 'WEB' end as channel,
     o."Order_Type" as order_type,
     o."userID" as user_id,
     o."finalAmount" as amount,

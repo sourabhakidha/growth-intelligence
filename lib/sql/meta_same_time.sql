@@ -1,0 +1,18 @@
+-- meta_same_time
+-- Purpose: Meta Ads "Now vs Yesterday vs Last 7 days vs MTD" with every day counted only to the SAME time of day —
+--          10:00 today vs 10:00 yesterday vs each of the last 7 days to 10:00 vs each earlier day this month to 10:00.
+-- Params : $1 = today (date, IST), $2 = cut-off, minutes since IST midnight (0–1439)
+-- Days   : from the earlier of (today − 7) and the 1st of the month, to today. One row per day.
+-- Sources and rules (implemented in lib/db/queries.ts -> metaSameTime; this file is the written definition):
+--   Meta      adwatch.meta_ad_daily (no readable hourly split). Today = the row as last pulled (meta_minute = minute of
+--             the latest pulled_at, capped at the cut-off). Earlier days = full day × the usual cumulative share of
+--             daily spend reached by meta_minute (META_SPEND_SHARE_BY_HOUR, interpolated within the hour) — applied
+--             to spend, impressions, clicks, link clicks, installs and 3-s views alike, so rates are full-day rates.
+--   AppsFlyer not here: meta_af.sql returns the same days to the same cut-off as level "st" rows (one AppsFlyer read
+--             per page), with the meta_af rules applied to events and orders by the cut-off minute of each day.
+--   Orders    public."Order_Level_V4", eligible Fresh (three agreed exclusions), APP + WEB, orderDate (IST wall clock)
+--             minute ≤ cut-off. fresh_customers = distinct userID that day.
+--   CRM       crm.leads cart leads (crm_025a, one per phone per IST day), created by the cut-off, Fresh = no COMPLETED
+--             order before the lead.
+-- Output : counts and sums per day only. No phone, userID, orderID or appsflyer_id leaves the server.
+select 1 where false;

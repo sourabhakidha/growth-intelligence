@@ -55,3 +55,15 @@ test("every SQL file is registered in lib/db/sql.ts and vice versa", () => {
 function stripComments(sql: string): string {
   return sql.split("\n").filter((l) => !l.trim().startsWith("--")).join("\n");
 }
+
+test("Supabase query implementations never read name, address or prescription columns, and never write", () => {
+  const src = readFileSync(path.join(import.meta.dirname, "..", "lib", "db", "queries.ts"), "utf8");
+  for (const col of NEVER_SELECT) {
+    assert.ok(!new RegExp(`\b${col}\b`, "i").test(src), `queries.ts references ${col}`);
+  }
+  const client = readFileSync(path.join(import.meta.dirname, "..", "lib", "db", "supabase.ts"), "utf8");
+  for (const src2 of [src, client]) {
+    assert.ok(!/\.(insert|update|upsert|delete|rpc)\(/.test(src2), "Supabase layer calls a write/RPC method");
+    assert.ok(!/columns:\s*["'`]\*["'`]/.test(src2), "Supabase layer selects *");
+  }
+});

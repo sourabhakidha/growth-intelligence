@@ -2,26 +2,24 @@ import "server-only";
 
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { isEmailAllowed } from "./allowlist";
-import { isOpenAccess } from "./mode";
+import { ROLE_LABEL, isRole, type DashboardRole } from "./passwords";
 
 export interface DashboardUser {
-  email: string;
-  name: string | null;
+  role: DashboardRole;
+  label: string;
 }
 
-/** Returns the signed-in, allow-listed user or null. Never trusts the client. */
+/** Returns the signed-in user or null. The session callback in auth.ts has already re-validated the password. */
 export async function getUser(): Promise<DashboardUser | null> {
-  if (isOpenAccess()) return { email: "Open access (no login)", name: null };
   const session = await auth();
-  const email = session?.user?.email;
-  if (!email || !isEmailAllowed(email, process.env.ALLOWED_EMAILS)) return null;
-  return { email, name: session.user?.name ?? null };
+  const role = (session?.user as { role?: unknown } | undefined)?.role;
+  if (!isRole(role)) return null;
+  return { role, label: ROLE_LABEL[role] };
 }
 
 /**
- * Authorization check for pages and layouts. proxy.ts only does an optimistic redirect; this is the
- * real check, and every data-access function calls assertUser() as well (defence in depth).
+ * Authorization check for pages and layouts (there is no proxy/middleware, so this is the gate), and every
+ * data-access function calls assertUser() as well (defence in depth).
  */
 export async function requireUser(): Promise<DashboardUser> {
   const user = await getUser();
