@@ -2,6 +2,7 @@
 
 import {
   BarChart3,
+  GitCompareArrows,
   Filter,
   LayoutDashboard,
   LogOut,
@@ -9,6 +10,7 @@ import {
   Megaphone,
   Menu,
   ShoppingCart,
+  Siren,
   Sparkles,
   TrendingUp,
   X,
@@ -21,8 +23,10 @@ import { cn } from "@/lib/cn";
 import { DateRangePicker } from "./DateRangePicker";
 
 const ICONS: Record<NavIcon, React.ComponentType<{ size?: number; className?: string }>> = {
+  warroom: Siren,
   overview: LayoutDashboard,
   meta: Megaphone,
+  impact: GitCompareArrows,
   creative: Sparkles,
   funnel: Filter,
   cart: ShoppingCart,
@@ -80,14 +84,13 @@ function Brand() {
 }
 
 interface AppShellProps {
-  userEmail: string;
-  /** null in open access mode (no login, nothing to sign out of). */
-  signOutAction: (() => Promise<void>) | null;
+  userLabel: string;
+  signOutAction: () => Promise<void>;
   liveData: boolean;
   children: React.ReactNode;
 }
 
-export function AppShell({ userEmail, signOutAction, liveData, children }: AppShellProps) {
+export function AppShell({ userLabel, signOutAction, liveData, children }: AppShellProps) {
   const [open, setOpen] = useState(false);
 
   const sidebar = (
@@ -99,16 +102,14 @@ export function AppShell({ userEmail, signOutAction, liveData, children }: AppSh
         </Suspense>
       </div>
       <div className="space-y-2 border-t border-line px-4 pt-4">
-        <p className="truncate text-[11px] text-ink-3" title={userEmail}>
-          {userEmail}
+        <p className="truncate text-[11px] text-ink-3" title={userLabel}>
+          {userLabel}
         </p>
-        {signOutAction ? (
-          <form action={signOutAction}>
-            <button type="submit" className="inline-flex items-center gap-1.5 text-xs text-ink-2 hover:text-ink">
-              <LogOut size={13} aria-hidden /> Sign out
-            </button>
-          </form>
-        ) : null}
+        <form action={signOutAction}>
+          <button type="submit" className="inline-flex items-center gap-1.5 text-xs text-ink-2 hover:text-ink">
+            <LogOut size={13} aria-hidden /> Sign out
+          </button>
+        </form>
       </div>
     </div>
   );

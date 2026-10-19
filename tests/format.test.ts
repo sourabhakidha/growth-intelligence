@@ -2,7 +2,6 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { formatCount, formatINR, formatINRCompact, formatPct, pctChange, safeDiv } from "../lib/format/inr.ts";
 import { addDays, daysBetween, parseRange, presetRange, previousPeriod, todayIST } from "../lib/format/ist.ts";
-import { isEmailAllowed } from "../lib/auth/allowlist.ts";
 
 test("Indian number grouping and INR", () => {
   assert.equal(formatCount(1234567), "12,34,567");
@@ -42,25 +41,4 @@ test("parseRange rejects bad input and falls back to MTD", () => {
   assert.equal(parseRange({ from: "'; drop table x;--", to: "2026-10-01" }, today).isDefault, true);
   assert.equal(parseRange({ from: "2024-01-01", to: "2026-10-01" }, today).isDefault, true);
   assert.deepEqual(parseRange({ from: "2026-10-10", to: "2026-12-31" }, today), { from: "2026-10-10", to: today, isDefault: false });
-});
-
-test("allow-list is deny-by-default and case-insensitive", () => {
-  assert.equal(isEmailAllowed("a@x.com", ""), false);
-  assert.equal(isEmailAllowed("a@x.com", undefined), false);
-  assert.equal(isEmailAllowed("A@X.com", "a@x.com, b@y.com"), true);
-  assert.equal(isEmailAllowed("c@akidha.com", "@akidha.com"), true);
-  assert.equal(isEmailAllowed("c@notakidha.com", "@akidha.com"), false);
-  assert.equal(isEmailAllowed("c@akidha.com.evil.io", "@akidha.com"), false);
-});
-
-import { isOpenAccess } from "../lib/auth/mode.ts";
-
-test("access mode defaults to open; google only when explicitly set", () => {
-  const prev = process.env.ACCESS_MODE;
-  delete process.env.ACCESS_MODE;
-  assert.equal(isOpenAccess(), true);
-  process.env.ACCESS_MODE = "google";
-  assert.equal(isOpenAccess(), false);
-  if (prev === undefined) delete process.env.ACCESS_MODE;
-  else process.env.ACCESS_MODE = prev;
 });

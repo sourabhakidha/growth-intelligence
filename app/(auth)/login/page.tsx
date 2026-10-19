@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { BarChart3, ShieldCheck } from "lucide-react";
-import { signInWithGoogle } from "@/app/actions";
+import { signInWithPassword } from "@/app/actions";
 import { getUser } from "@/lib/auth/guard";
-import { isOpenAccess } from "@/lib/auth/mode";
 
 export const metadata: Metadata = { title: "Sign in" };
 
 const ERRORS: Record<string, string> = {
-  AccessDenied: "This Google account is not on the dashboard allow-list.",
-  Configuration: "Sign-in is not configured yet. Ask an admin to set the Auth environment variables.",
+  CredentialsSignin: "Incorrect password.",
+  Configuration: "Sign-in is not configured yet. Ask an admin to set the Auth environment variables."
 };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
-  if (isOpenAccess() || (await getUser())) redirect("/");
+  if (await getUser()) redirect("/");
   const sp = await searchParams;
   const error = typeof sp.error === "string" ? (ERRORS[sp.error] ?? "Sign-in failed. Try again.") : null;
   const next = typeof sp.next === "string" ? sp.next : "/";
@@ -35,10 +34,21 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
             {error}
           </p>
         ) : null}
-        <form action={signInWithGoogle} className="mt-6">
+        <form action={signInWithPassword} className="mt-6 space-y-3">
           <input type="hidden" name="next" value={next} />
+          <label className="block">
+            <span className="text-xs font-medium text-ink-2">Password</span>
+            <input
+              type="password"
+              name="password"
+              required
+              autoFocus
+              autoComplete="current-password"
+              className="mt-1 w-full rounded-md border border-line bg-surface-0 px-3 py-2 text-sm text-ink outline-none focus:border-accent"
+            />
+          </label>
           <button type="submit" className="w-full rounded-md bg-accent px-3 py-2 text-sm font-medium text-white hover:opacity-90">
-            Continue with Google
+            Sign in
           </button>
         </form>
         <p className="mt-4 flex items-start gap-1.5 text-[11px] leading-relaxed text-ink-3">

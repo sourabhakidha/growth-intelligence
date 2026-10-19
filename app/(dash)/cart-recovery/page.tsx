@@ -22,7 +22,7 @@ const LIFECYCLE_COLUMNS: TableColumn[] = [
   { key: "dialled", label: "Dialled", format: "count" },
   { key: "won_any_order", label: "Any order after lead*", format: "count" },
   { key: "won_fresh_app", label: "Fresh APP*", format: "count" },
-  { key: "won_fresh_web_agent", label: "Fresh WEB agent*", format: "count" },
+  { key: "won_fresh_web", label: "Fresh WEB*", format: "count" },
   { key: "median_min_cart_to_lead", label: "Cart → lead (median)", format: "minutes" },
 ];
 

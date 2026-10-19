@@ -1,0 +1,29 @@
+-- war_room
+-- Purpose: intraday pacing for the Daily Growth War Room. Every metric is counted for TODAY up to the current IST time
+--          and for each of the previous 14 days up to the SAME time of day (so_far) and for the whole day (full), so the
+--          page compares "by 2 pm today" with "by 2 pm on a normal day" — never with full-day totals.
+-- Params : $1 = today (date, IST), $2 = cut-off, minutes since IST midnight (0–1439)
+-- History: 14 days (orders, Meta) / 7 days (AppsFlyer, CRM) for the pacing medians, extended back to the 1st of the
+--          month so the page can show Now vs Yesterday / Last 7 days / MTD, every day counted to the same minute.
+-- Sources and rules (implemented in lib/db/queries.ts -> warRoom; this file is the written definition):
+--   Orders  public."Order_Level_V4", Order_Type Fresh, APP / WEB, orderDate = IST wall clock.
+--           new_sales  = eligible Fresh orders (excl. PRESCRIPTION_UPLOADED, DELIVERY_CANCELED,
+--                        THREE_PL_CANCELLED_ACKNOWLEDGEMENT); segments all / APP / WEB / region tier (lib/geo/regions.ts)
+--                        / mmr (Priority Mumbai pincodes + rest of MMR); revenue likewise (all only).
+--           cancelled  = Fresh orders placed that day now in DELIVERY_CANCELED / THREE_PL_CANCELLED_ACKNOWLEDGEMENT.
+--           rx_uploads = Fresh rows in PRESCRIPTION_UPLOADED (prescription sent, no order yet); rx_converted = those
+--                        whose user has an eligible APP/WEB order (Fresh or Repeat) at or after the upload.
+--           new_sales_h = eligible Fresh orders per IST hour (segment = hour), for the today-vs-usual curve.
+--   Meta    adwatch.meta_campaign_hourly: spend / installs per campaign up to the last hour loaded today (cut-off
+--           hour H, reported as meta_hour); priors up to the same hour. spend_h = account spend per hour.
+--           adwatch.meta_ad_daily: by ad and ad set (ad_spend / ad_installs, segment = level:id, label = names) for the
+--           scorecard; earlier days' so_far = full day × the usual share of daily spend reached by the last loaded hour.
+--   AppsFlyer public.af_events_rt (paid users only, from 6 Oct 2026): distinct devices per event up to the cut-off
+--           (install, af_add_to_cart, af_initiated_checkout, Payment_failed, af_purchase), today + previous 7 days,
+--           segment all paid / meta (media_source restricted or Facebook Ads).
+--   CRM     crm.leads cart leads, written crm_025a rule (one per phone per IST day): fresh_leads to the cut-off,
+--           today + previous 7 days. crm.tasks open queue NOW (snapshot, day = today): never dialled / callback overdue /
+--           next action overdue, by task type; call outcomes by last-dial day (last outcome per task — a proxy).
+--   adwatch.signals detected today (rule, entity, message) — adwatch's own Meta rules, relayed as-is.
+-- Output : counts and sums only. No phone, userID, orderID or pincode leaves the server.
+select 1 where false;

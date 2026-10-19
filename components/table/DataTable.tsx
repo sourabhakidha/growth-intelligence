@@ -172,7 +172,11 @@ export function DataTable({ columns, rows, exportName, pageSize = 15, emptyMessa
                     const col = c.column.columnDef.meta as TableColumn;
                     const right = col.align === "right" || (col.format && col.format !== "text" && col.format !== "date");
                     return (
-                      <td key={c.id} className={cn("whitespace-nowrap px-3 py-1.5 text-ink", right ? "tabular text-right" : "text-left")}>
+                      <td
+                        key={c.id}
+                        // Text columns wrap (names, reasons) so tables fit their card; numbers never wrap.
+                        className={cn("px-3 py-1.5 align-top text-ink", right ? "tabular whitespace-nowrap text-right" : col.format === "date" ? "whitespace-nowrap text-left" : "min-w-[6rem] max-w-[20rem] break-words text-left")}
+                      >
                         {flexRender(c.column.columnDef.cell, c.getContext())}
                       </td>
                     );

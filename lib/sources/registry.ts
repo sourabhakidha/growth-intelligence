@@ -102,11 +102,30 @@ export const SOURCES: Record<SourceId, SourceInfo> = {
   },
   regions: {
     id: "regions",
-    label: "City → region mapping",
-    relation: "public.dash_city_region",
-    grain: "city_key → region (52 rows)",
-    coverageFrom: null,
-    refresh: "Manual",
-    caveats: ["~56% of October Fresh orders are in unmapped cities.", "No Tier 3 definition yet."],
+    label: "Regional hierarchy (pincode)",
+    relation: 'Order_Level_V4."pinCode" → lib/geo/regions.ts',
+    grain: "order → tier → area",
+    coverageFrom: "2025-10-24",
+    refresh: "Every 15 min (with orders); mapping is version-controlled",
+    caveats: [
+      "Groups are exclusive, first match wins: Priority Mumbai pincodes → Tier 1 → Delhi NCR → Tier 2 → Tier 3.",
+      "Tier 1 = rest of MMR (incl. Mira-Bhayandar), Pune & Pimpri-Chinchwad, Kolkata & Howrah, Hyderabad & Secunderabad, Ahmedabad, Chennai, Bangalore, Surat.",
+      "Tier 2 = established Tier 2 cities (Government of India Y-class list, plus Satara), e.g. Bhopal, Indore, Kolhapur, Sangli, Satara, Visakhapatnam, Lucknow, Chandigarh.",
+      "Tier 3 = every other valid pincode. Orders without a valid pincode are 'location not verified', never Tier 3.",
+      "Surat (high RTO) and Visakhapatnam are flagged whenever they get orders.",
+    ],
   },
+  crm_change_log: {
+    id: "crm_change_log",
+    label: "Change log",
+    relation: "crm.change_log",
+    grain: "1 row per logged change / experiment",
+    coverageFrom: "2026-10-07",
+    refresh: "When someone logs or updates a change",
+    caveats: [
+      "Who, intent and expected outcome exist only for changes someone logged. Meta's own activity log stopped loading on 7 Jul 2026, so Meta edits are otherwise detected from delivery data.",
+      "CRM changes (lead routing, dialer, WhatsApp flows) are logged here too; they move leads and New Sales and are flagged as concurrent changes.",
+    ],
+  },
+
 };

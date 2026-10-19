@@ -1,0 +1,12 @@
+# The Next.js runtime (OpenNext adapter) is configured explicitly via @netlify/plugin-nextjs below, so builds on
+# Netlify's servers always use it instead of publishing .next as static files.
+# Environment variables (see .env.example) are set in Site configuration → Environment variables, not here.
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

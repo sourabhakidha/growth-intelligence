@@ -1,15 +1,13 @@
 import { AppShell } from "@/components/layout/AppShell";
 import { requireUser } from "@/lib/auth/guard";
-import { isOpenAccess } from "@/lib/auth/mode";
 import { isLiveDataEnabled } from "@/lib/data/run";
 import { signOutAction } from "@/app/actions";
 
-// Server-side authorization for every dashboard page (proxy.ts is only an optimistic redirect).
-// In open access mode requireUser() always succeeds.
+// Server-side authorization for every dashboard page. There is no proxy/middleware: this is the gate.
 export default async function DashLayout({ children }: LayoutProps<"/">) {
   const user = await requireUser();
   return (
-    <AppShell userEmail={user.email} signOutAction={isOpenAccess() ? null : signOutAction} liveData={isLiveDataEnabled()}>
+    <AppShell userLabel={`Signed in as ${user.label}`} signOutAction={signOutAction} liveData={isLiveDataEnabled()}>
       {children}
     </AppShell>
   );

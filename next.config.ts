@@ -11,10 +11,6 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  // Reporting SQL is read from lib/sql at runtime; make sure it ships with every server function.
-  outputFileTracingIncludes: {
-    "/**": ["./lib/sql/**/*.sql"],
-  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

@@ -8,11 +8,7 @@ with o as (
   select
     o."Order_Type" as order_type,
     o."userID" as user_id,
-    case
-      when o."orderPlatform" = 'APP' then 'APP'
-      when o."orderPlatform" = 'WEB' and o."Internal_Team" is true then 'WEB_AGENT'
-      else 'WEB_OTHER'
-    end as channel
+    case when o."orderPlatform" = 'APP' then 'APP' else 'WEB' end as channel
   from public."Order_Level_V4" o
   where o."orderDate" >= $1::date
     and o."orderDate" <  ($2::date + 1)
@@ -24,8 +20,7 @@ select
   order_type,
   count(distinct user_id)                                      as unique_customers_all,
   count(distinct user_id) filter (where channel = 'APP')       as unique_customers_app,
-  count(distinct user_id) filter (where channel = 'WEB_AGENT') as unique_customers_web_agent,
-  count(distinct user_id) filter (where channel = 'WEB_OTHER') as unique_customers_web_other
+  count(distinct user_id) filter (where channel = 'WEB')       as unique_customers_web
 from o
 group by order_type
 order by order_type;

@@ -13,18 +13,18 @@ const read = (f: string) =>
 const EXCLUSIONS = "status not in ('PRESCRIPTION_UPLOADED', 'DELIVERY_CANCELED', 'THREE_PL_CANCELLED_ACKNOWLEDGEMENT')";
 
 test("every new-sales query applies exactly the three agreed status exclusions", () => {
-  for (const f of ["orders_daily.sql", "orders_unique_customers.sql", "orders_payment_mix.sql", "regions_daily.sql", "unmapped_cities.sql"]) {
+  for (const f of ["orders_daily.sql", "orders_unique_customers.sql", "orders_payment_mix.sql", "regional_fresh.sql"]) {
     const sql = read(f);
     assert.ok(sql.includes(EXCLUSIONS), `${f} is missing the agreed exclusion list`);
     assert.ok(!/RTO_|'CANCELLED'|DR_REJECTED/.test(sql), `${f} excludes extra statuses`);
   }
 });
 
-test("channel logic treats Internal_Team as agent-placed, never as an exclusion", () => {
-  for (const f of ["orders_daily.sql", "orders_unique_customers.sql", "orders_payment_mix.sql", "regions_daily.sql"]) {
+test("channel is APP (self-serve) vs WEB (sales-assisted) only, never split by agent", () => {
+  for (const f of ["orders_daily.sql", "orders_unique_customers.sql", "orders_payment_mix.sql", "cart_lead_lifecycle_daily.sql", "regional_fresh.sql"]) {
     const sql = read(f);
-    assert.ok(sql.includes(`"Internal_Team" is true then 'WEB_AGENT'`), `${f} channel mapping changed`);
-    assert.ok(!/"Internal_Team"\s*(=\s*false|is\s+(not\s+true|false))/i.test(sql), `${f} filters out agent orders`);
+    assert.ok(/'APP' then 'APP'/.test(sql) && /else 'WEB'/.test(sql), `${f} channel mapping changed`);
+    assert.ok(!/Internal_Team|WEB_AGENT|WEB_OTHER/.test(sql), `${f} splits WEB by agent`);
   }
 });
 
